@@ -1,0 +1,36 @@
+function (e, t, r) {
+  var s = e("@parcel/transformer-js/src/esmodule-helpers.js");
+  s.defineInteropFlag(r);
+  var a = e("./addBookmark");
+  s.exportAll(a, r);
+  var o = e("./closeTab");
+  s.exportAll(o, r);
+  var n = e("./createTab");
+  s.exportAll(n, r);
+  var i = e("./duplicateTab");
+  s.exportAll(i, r);
+  var l = e("./elementClick");
+  s.exportAll(l, r);
+  var c = e("./elementFill");
+  s.exportAll(c, r);
+  var u = e("./elementGetState");
+  s.exportAll(u, r);
+  var d = e("./executeJS");
+  s.exportAll(d, r);
+  var p = e("./getBookmarks");
+  s.exportAll(p, r);
+  var h = e("./getHistory");
+  s.exportAll(h, r);
+  var f = e("./getTab");
+  s.exportAll(f, r);
+  var m = e("./getTabs");
+  s.exportAll(m, r);
+  var g = e("./pageAnalysis");
+  s.exportAll(g, r);
+  var b = e("./pageNavigate");
+  s.exportAll(b, r);
+  var w = e("./pageWaitFor");
+  s.exportAll(w, r);
+  var y = e("./switchToTab");
+  s.exportAll(y, r);
+})

@@ -1,0 +1,21 @@
+{
+  "iqY5N": "background_entry",
+  "l83jr": "background_methods_index",
+  "crZ5e": "background_addBookmark",
+  "iY5Dl": "background_closeTab",
+  "5LA4E": "background_createTab",
+  "akdTX": "background_duplicateTab",
+  "7AjHf": "background_elementClick",
+  "gooH4": "background_elementFill",
+  "5GTxM": "background_elementGetState",
+  "dAxXR": "background_executeJS",
+  "jhNgH": "background_getBookmarks",
+  "kAAUc": "background_getHistory",
+  "j0cF8": "background_getTab",
+  "iBlhv": "background_getTabs",
+  "4ddan": "background_pageAnalysis",
+  "cm7gw": "background_pageNavigate",
+  "bvxBc": "background_pageWaitFor",
+  "Ea24u": "background_switchToTab",
+  "bbD2v": "background_utils"
+}
