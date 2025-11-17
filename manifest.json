@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Raycast Companion",
+  "description": "A browser extension to give more context to Raycast",
+  "version": "1.2.0",
+  "author": "Raycast",
+  "homepage_url": "https://www.raycast.com",
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "64": "icons/icon64.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "64": "icons/icon64.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "permissions": ["storage", "activeTab", "scripting", "userScripts", "history", "bookmarks"],
+  "host_permissions": ["*://*/"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ]
+}

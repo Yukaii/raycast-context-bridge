@@ -1,0 +1,23 @@
+{
+  "name": "restored_repo",
+  "version": "1.0.0",
+  "description": "Reverse-engineered Raycast Companion extension",
+  "main": "extract_modules.js",
+  "scripts": {
+    "build": "node scripts/build.mjs",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@plasmohq/messaging": "^0.7.2",
+    "@plasmohq/storage": "^1.15.0",
+    "defuddle": "^0.6.6",
+    "he": "^1.2.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.27.0",
+    "typescript": "^5.9.3"
+  }
+}
