@@ -1,9 +1,9 @@
-import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "@raycast/icons"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import clsx from "classnames"
 import { forwardRef, type ComponentPropsWithoutRef, type ElementRef } from "react"
 
 import "../styles/select.css"
+import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "./icons"
 
 type TriggerProps = ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
 

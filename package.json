@@ -14,14 +14,13 @@
     "@plasmohq/messaging": "^0.7.2",
     "@plasmohq/storage": "^1.15.0",
     "@radix-ui/react-select": "^2.2.6",
-    "@raycast/icons": "^0.4.7",
-    "@types/react": "^19.2.6",
-    "@types/react-dom": "^19.2.3",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7",
     "classnames": "^2.5.1",
     "defuddle": "^0.6.6",
     "he": "^1.2.0",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "esbuild": "^0.27.0",

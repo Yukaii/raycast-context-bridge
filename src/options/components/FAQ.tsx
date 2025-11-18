@@ -1,6 +1,6 @@
-import { ChevronDownIcon } from "@raycast/icons"
 import clsx from "classnames"
 import { useId, useState } from "react"
+import { ChevronDownIcon } from "./icons"
 
 type FAQEntry = { q: string; a: string }
 
