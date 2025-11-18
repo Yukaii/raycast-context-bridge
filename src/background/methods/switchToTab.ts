@@ -5,8 +5,8 @@ export const switchToTab = async ({ tabId }: { tabId: number }) => {
   const tab = await tabs.get(tabId)
   if (!tab) throw Error(`Tab ${tabId} not found`)
   await tabs.update(tabId, { active: true })
-  if (tab.windowId !== undefined) {
+  if (typeof tab.windowId !== "undefined") {
     await windows.update(tab.windowId, { focused: true })
   }
-  return { success: true, tabId }
+  return { success: true, tabId, title: tab.title, url: tab.url }
 }
