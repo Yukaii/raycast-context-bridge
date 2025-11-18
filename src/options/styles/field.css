@@ -1,0 +1,52 @@
+.field-label {
+  color: #fff9;
+  margin-top: 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  display: flex;
+}
+
+.field-outer {
+  width: 100%;
+  margin: 6px 0;
+  position: relative;
+}
+
+.field-inner {
+  position: relative;
+  width: 100%;
+}
+
+.field-input {
+  width: 100%;
+  color: #fff;
+  letter-spacing: 0.2px;
+  background: #120e19;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+  padding: 12px 16px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  outline: none;
+  transition: all 0.3s;
+}
+
+.field-input::placeholder {
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.field-glow {
+  position: absolute;
+  inset: 2px;
+  border-radius: 8px;
+  opacity: 0;
+  transition: opacity 0.3s;
+}
+
+.field-input:focus + .field-glow {
+  opacity: 1;
+  background: linear-gradient(107deg, #ff3e3e99 1.52%, #052dff99 101.52%) border-box;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}

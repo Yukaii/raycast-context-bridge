@@ -1,0 +1,35 @@
+.checkbox-label {
+  color: #fff9;
+  display: flex;
+  font-size: 14px;
+  font-weight: 600;
+  gap: 8px;
+  align-items: center;
+}
+
+.checkbox-input {
+  cursor: pointer;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.checkbox-box {
+  border: 1px solid #fff3;
+  border-radius: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 14px;
+  height: 14px;
+}
+
+.checkbox-box > svg {
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+}
+
+.checkbox-box.checked > svg {
+  opacity: 1;
+}

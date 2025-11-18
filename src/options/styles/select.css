@@ -1,0 +1,83 @@
+.select-trigger {
+  all: unset;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 44px;
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.2px;
+  line-height: 20px;
+  background-color: #ffffff0d;
+  border: 1px solid #ffffff0d;
+  border-radius: 8px;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out,
+    border-color 0.15s ease-in-out;
+}
+
+.select-trigger [data-placeholder] {
+  color: #fff3;
+}
+
+.select-trigger:focus,
+.select-trigger:hover {
+  border-color: #fff6;
+}
+
+.select-icon {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.select-content {
+  z-index: 102;
+  background: #ffffff1a;
+  border: 1px solid #fff3;
+  border-radius: 8px;
+  backdrop-filter: blur(48px);
+}
+
+.select-viewport {
+  padding: 8px;
+}
+
+.select-item {
+  color: #fff;
+  letter-spacing: 0.2px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  padding: 6px 8px;
+  display: flex;
+  align-items: center;
+  border-radius: 6px;
+}
+
+.select-item[data-state="unchecked"] {
+  padding-left: 30px;
+}
+
+.select-item[data-highlighted] {
+  background: #ffffff1a;
+  outline: none;
+}
+
+.select-indicator {
+  display: flex;
+  align-items: center;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px;
+}
+
+.select-scroll-button {
+  color: #fff9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 25px;
+}

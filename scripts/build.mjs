@@ -38,6 +38,17 @@ await Promise.all([
     format: "esm",
     entryPoints: [path.join(projectRoot, "src/user-scripts/index.ts")],
     outfile: path.join(outDir, "user-script.js")
+  }),
+  build({
+    ...sharedOptions,
+    format: "iife",
+    entryPoints: [path.join(projectRoot, "src/options/main.tsx")],
+    outfile: path.join(outDir, "options.js"),
+    loader: {
+      ".css": "css",
+      ".jpg": "file"
+    },
+    assetNames: "assets/[name]"
   })
 ])
 
