@@ -1,13 +1,18 @@
-const tabs = globalThis.browser?.tabs || globalThis.chrome?.tabs
+import { relayToContentScript } from "../utils"
 
-export const getTab = async ({ tabId }: { tabId?: number }) => {
-  let target = tabId
-  if (!target) {
-    const [active] = await tabs.query({ active: true, currentWindow: true })
-    if (!active) throw Error("No active tab found")
-    target = active.id
-  }
+type GetTabParams = {
+  field: string
+  format?: string
+  selector?: string
+  tabId?: number
+}
 
-  const tab = await tabs.get(target!)
-  return { success: true, tab }
+export const getTab = async (params: GetTabParams) => {
+  const response = await relayToContentScript({
+    name: "getTab",
+    body: { ...params, target: "content-script" },
+    tabId: params.tabId
+  })
+
+  return { value: response.result }
 }
