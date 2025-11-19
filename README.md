@@ -25,3 +25,7 @@ npm run build
 ```
 
 Load `dist/chrome` as an unpacked extension in Chromium-based browsers, or `dist/firefox` in Firefox (where the manifest switches to a persistent background script). The build currently emits a warning about `eval` inside the user script because the extension allows Raycast to execute snippets sent from the desktop app—this matches the original behavior and should only be changed if you plan to restrict that feature.
+
+### Firefox support
+
+The Firefox bundle exists to keep parity with the original sources, but the Raycast desktop application only accepts WebSocket handshakes coming from `chrome-extension://…` origins. Firefox always uses `moz-extension://…` and the browser does not allow extensions to override the `Origin` header, so the desktop app closes the handshake before our background script can register. The background worker will keep logging attempts such as `browserDidFocus` followed by `Firefox can’t establish a connection to the server at ws://localhost:7265 (code 1006)` because it retries every time the browser focuses a tab, but the connection is rejected upstream. This limitation lives in Raycast’s binary, not in the extension itself. As soon as the desktop app supports Firefox origins the `dist/firefox` build will work without changes.
