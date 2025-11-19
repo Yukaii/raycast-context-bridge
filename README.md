@@ -1,21 +1,21 @@
 # Raycast Companion – Restored Sources
 
-This repository contains a reverse–engineered version of the Raycast Companion browser extension. The original CRX bundle was unpacked and its Parcel modules were extracted into readable TypeScript sources that now live under `src/`.
-
-## Restoration workflow
-
-1. **Module extraction** – The original bundles (`content.903826e2.js`, `static/background/index.js`, `userScripts.b7259c65.js`) were parsed with `scripts/extract_modules.js` to recover individual Parcel modules. The recovered JS and mapping tables (`background_modules.json`, `raycast_modules*.json`) live in `original_sources/`.
-2. **Source reconstruction** – Each recovered module was ported to TypeScript under `src/`, keeping the same APIs (content script, background service worker, user script, messaging helpers, etc.). Runtime-only dependencies (`@plasmohq/*`, `defuddle`, `he`) were reintroduced via `package.json`.
-3. **Raycast bridge** – The private `@raycast/app` WebSocket bridge (module `eeKRu`) and its RPC error helpers were extracted and reimplemented in `src/lib/raycast.ts` / `src/lib/raycast-errors.ts` so the background script can talk to the desktop Raycast app just like the original extension.
-4. **Build tooling** – `scripts/build.mjs` runs esbuild on the TypeScript sources to reproduce `content.js`, `background.js`, `user-script.js`, and copies the appropriate manifest (`manifest.json` for Chromium, `manifest.firefox.json` for Gecko), the restored Options page bundle, plus icons into per-browser directories under `dist/`. The original extraction script is stored as `scripts/extract_modules.js` for future investigations.
+This repository collects a faithful reconstruction of the Raycast Companion browser extension. The original CRX bundle was unpacked and its Parcel modules translated into readable TypeScript, so the codebase looks like a normal extension project while still matching the behavior of the shipped build.
 
 ## Project structure
 
 - `src/` – TypeScript sources for the content script, background worker, user script, and shared libraries.
 - `assets/` – Extracted icons.
-- `dist/` – Build output (`npm run build`), containing `chrome/` and `firefox/` bundles.
-- `original_sources/` – Raw modules extracted from the original Parcel bundles (kept for reference).
-- `scripts/` – Build script plus the original `extract_modules.js`.
+- `scripts/` – Build script (`build.mjs`) plus the extraction helper used during restoration (`extract_modules.js`).
+- `dist/` – Build output, containing `chrome/` and `firefox/` bundles (`npm run build`).
+- `original_sources/` – Reference artifacts extracted from the original bundles. These are read-only and kept for diffing.
+
+## Restoration workflow
+
+1. **Module extraction** – The original bundles (`content.903826e2.js`, `static/background/index.js`, `userScripts.b7259c65.js`) were parsed with `scripts/extract_modules.js` to recover individual Parcel modules. The recovered JS and lookup tables (`background_modules.json`, `raycast_modules*.json`) live under `original_sources/`.
+2. **Source reconstruction** – Each recovered module was ported to TypeScript under `src/`, keeping the same APIs (content script, background service worker, user script, messaging helpers, etc.). Runtime-only dependencies (`@plasmohq/*`, `defuddle`, `he`) were reintroduced via `package.json`.
+3. **Raycast bridge** – The private `@raycast/app` WebSocket bridge (module `eeKRu`) and its RPC error helpers were extracted and reimplemented in `src/lib/raycast.ts` so the background script can talk to the desktop Raycast app just like the original extension.
+4. **Build tooling** – `scripts/build.mjs` runs esbuild on the TypeScript sources to produce `content.js`, `background.js`, `user-script.js`, the Options page bundle, and copies the appropriate manifest into per-browser directories under `dist/`.
 
 ## Building
 
@@ -24,8 +24,8 @@ npm install
 npm run build
 ```
 
-Load `dist/chrome` as an unpacked extension in Chromium-based browsers, or `dist/firefox` in Firefox (where the manifest switches to a persistent background script). The build currently emits a warning about `eval` inside the user script because the extension allows Raycast to execute snippets sent from the desktop app—this matches the original behavior and should only be changed if you plan to restrict that feature.
+Load `dist/chrome` as an unpacked extension in Chromium-based browsers, or `dist/firefox` in Firefox (where the manifest switches to a persistent background script). Esbuild will warn about `eval` in the user script because the extension allows Raycast to execute snippets sent from the desktop app—this matches the original behavior, so leave it unless you plan to restrict that feature.
 
 ### Firefox support
 
-The Firefox bundle exists to keep parity with the original sources, but the Raycast desktop application only accepts WebSocket handshakes coming from `chrome-extension://…` origins. Firefox always uses `moz-extension://…` and the browser does not allow extensions to override the `Origin` header, so the desktop app closes the handshake before our background script can register. The background worker will keep logging attempts such as `browserDidFocus` followed by `Firefox can’t establish a connection to the server at ws://localhost:7265 (code 1006)` because it retries every time the browser focuses a tab, but the connection is rejected upstream. This limitation lives in Raycast’s binary, not in the extension itself. As soon as the desktop app supports Firefox origins the `dist/firefox` build will work without changes.
+The Firefox build exists to keep feature parity but the Raycast desktop app only accepts WebSocket handshakes from `chrome-extension://…` origins. Firefox always uses `moz-extension://…` and browsers do not allow extensions to override the `Origin` header, so the desktop app closes the handshake before our background script can register. The console will log repeated events such as `browserDidFocus` followed by `Firefox can’t establish a connection to the server at ws://localhost:7265 (code 1006)` because the background worker retries on every focus change, but the rejection happens in Raycast’s binary. Once the desktop app supports Firefox origins, the `dist/firefox` bundle will work without further changes.
