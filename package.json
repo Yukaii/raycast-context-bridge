@@ -1,5 +1,5 @@
 {
-  "name": "restored_repo",
+  "name": "raycast-companion",
   "version": "1.0.0",
   "description": "Reverse-engineered Raycast Companion extension",
   "main": "extract_modules.js",

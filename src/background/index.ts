@@ -12,12 +12,17 @@ import * as methods from "./methods"
 const storage = new Storage()
 const runtime = globalThis.browser?.runtime || globalThis.chrome?.runtime
 const windows = globalThis.browser?.windows || globalThis.chrome?.windows
-const action = globalThis.browser?.action || globalThis.chrome?.action
+const action =
+  globalThis.browser?.action ||
+  globalThis.chrome?.action ||
+  globalThis.browser?.browserAction ||
+  globalThis.chrome?.browserAction
 const tabs = globalThis.browser?.tabs || globalThis.chrome?.tabs
 const scripting = globalThis.browser?.scripting || globalThis.chrome?.scripting
 
-if (action && runtime.getManifest().action?.default_icon) {
-  action.setIcon({ path: runtime.getManifest().action.default_icon })
+const manifestAction = runtime.getManifest().action || runtime.getManifest().browser_action
+if (action && manifestAction?.default_icon) {
+  action.setIcon({ path: manifestAction.default_icon })
 }
 
 const ensureConnection = () => {
@@ -74,18 +79,37 @@ if (storage.isWatchSupported()) {
   })
 }
 
-runtime.onInstalled.addListener(async () => {
-  for (const script of runtime.getManifest().content_scripts || []) {
+const injectContentScripts = async () => {
+  const manifestScripts = runtime.getManifest().content_scripts || []
+  for (const script of manifestScripts) {
     const matches = await tabs.query({ url: script.matches })
     for (const tab of matches) {
-      scripting
-        .executeScript({
-          target: { tabId: tab.id },
-          files: script.js
-        })
-        .catch((error) => console.log(error))
+      if (!tab.id) continue
+      if (scripting?.executeScript) {
+        await scripting
+          .executeScript({
+            target: { tabId: tab.id },
+            files: script.js
+          })
+          .catch((error) => console.log(error))
+      } else if (typeof tabs.executeScript === "function") {
+        for (const file of script.js) {
+          const result = tabs.executeScript(tab.id, { file })
+          if (result && typeof result.then === "function") {
+            await result.catch((error) => console.log(error))
+          } else {
+            await new Promise((resolve) =>
+              tabs.executeScript(tab.id, { file }, () => resolve(undefined))
+            )
+          }
+        }
+      }
     }
   }
+}
+
+runtime.onInstalled.addListener(async () => {
+  await injectContentScripts()
 })
 
 if (action) {

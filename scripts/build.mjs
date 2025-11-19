@@ -1,67 +1,90 @@
 import { build } from "esbuild"
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises"
+import { cp, mkdir, rm } from "node:fs/promises"
 import path from "node:path"
 
 const projectRoot = process.cwd()
-const outDir = path.join(projectRoot, "dist")
+const outRoot = path.join(projectRoot, "dist")
 const iconsDir = path.join(projectRoot, "assets")
 
-await rm(outDir, { recursive: true, force: true })
-await mkdir(outDir, { recursive: true })
+const platforms = [
+  {
+    name: "chrome",
+    target: ["chrome110"],
+    manifest: "manifest.json",
+    backgroundFormat: "esm",
+    userScriptFormat: "esm"
+  },
+  {
+    name: "firefox",
+    target: ["firefox115"],
+    manifest: "manifest.firefox.json",
+    backgroundFormat: "iife",
+    userScriptFormat: "iife"
+  }
+]
 
-const buildTarget = ["chrome110", "firefox115"]
+await rm(outRoot, { recursive: true, force: true })
+await mkdir(outRoot, { recursive: true })
 
 const sharedOptions = {
   bundle: true,
   sourcemap: true,
-  target: buildTarget,
   define: {
     "process.env.NODE_ENV": JSON.stringify(process.env.NODE_ENV || "development")
   }
 }
 
-await Promise.all([
-  build({
-    ...sharedOptions,
-    format: "iife",
-    entryPoints: [path.join(projectRoot, "src/content/index.ts")],
-    outfile: path.join(outDir, "content.js")
-  }),
-  build({
-    ...sharedOptions,
-    format: "esm",
-    entryPoints: [path.join(projectRoot, "src/background/index.ts")],
-    outfile: path.join(outDir, "background.js")
-  }),
-  build({
-    ...sharedOptions,
-    format: "esm",
-    entryPoints: [path.join(projectRoot, "src/user-scripts/index.ts")],
-    outfile: path.join(outDir, "user-script.js")
-  }),
-  build({
-    ...sharedOptions,
-    format: "iife",
-    entryPoints: [path.join(projectRoot, "src/options/main.tsx")],
-    outfile: path.join(outDir, "options.js"),
-    loader: {
-      ".css": "css",
-      ".jpg": "file"
-    },
-    assetNames: "assets/[name]"
-  })
-])
+for (const platform of platforms) {
+  const platformOutDir = path.join(outRoot, platform.name)
+  await mkdir(platformOutDir, { recursive: true })
+  const platformOptions = { ...sharedOptions, target: platform.target }
 
-await Promise.all([
-  cp(path.join(projectRoot, "manifest.json"), path.join(outDir, "manifest.json")),
-  cp(path.join(projectRoot, "options.html"), path.join(outDir, "options.html"))
-])
+  await Promise.all([
+    build({
+      ...platformOptions,
+      format: "iife",
+      entryPoints: [path.join(projectRoot, "src/content/index.ts")],
+      outfile: path.join(platformOutDir, "content.js")
+    }),
+    build({
+      ...platformOptions,
+      format: platform.backgroundFormat,
+      entryPoints: [path.join(projectRoot, "src/background/index.ts")],
+      outfile: path.join(platformOutDir, "background.js")
+    }),
+    build({
+      ...platformOptions,
+      format: platform.userScriptFormat,
+      entryPoints: [path.join(projectRoot, "src/user-scripts/index.ts")],
+      outfile: path.join(platformOutDir, "user-script.js")
+    }),
+    build({
+      ...platformOptions,
+      format: "iife",
+      entryPoints: [path.join(projectRoot, "src/options/main.tsx")],
+      outfile: path.join(platformOutDir, "options.js"),
+      loader: {
+        ".css": "css",
+        ".jpg": "file"
+      },
+      assetNames: "assets/[name]"
+    })
+  ])
 
-await mkdir(path.join(outDir, "icons"), { recursive: true })
-await Promise.all(
-  ["icon16.png", "icon32.png", "icon48.png", "icon64.png", "icon128.png"].map((file) =>
-    cp(path.join(iconsDir, file), path.join(outDir, "icons", file))
+  await Promise.all([
+    cp(path.join(projectRoot, platform.manifest), path.join(platformOutDir, "manifest.json")),
+    cp(path.join(projectRoot, "options.html"), path.join(platformOutDir, "options.html"))
+  ])
+
+  const iconOutDir = path.join(platformOutDir, "icons")
+  await mkdir(iconOutDir, { recursive: true })
+  await Promise.all(
+    ["icon16.png", "icon32.png", "icon48.png", "icon64.png", "icon128.png"].map((file) =>
+      cp(path.join(iconsDir, file), path.join(iconOutDir, file))
+    )
   )
-)
+}
 
-console.log("Build complete. Output:", outDir)
+console.log("Build complete. Output directories:", platforms
+  .map((platform) => path.join(outRoot, platform.name))
+  .join(", "))
