@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
-  "name": "Raycast Companion",
-  "description": "A browser extension to give more context to Raycast",
+  "name": "Raycast Context Bridge (Educational)",
+  "description": "Educational reconstruction of the Raycast Companion extension",
   "version": "1.2.0",
   "author": "Raycast",
   "homepage_url": "https://www.raycast.com",

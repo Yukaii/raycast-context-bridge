@@ -1,6 +1,6 @@
-# Raycast Companion – Restored Sources
+# Raycast Context Bridge (Educational)
 
-This repository collects a faithful reconstruction of the Raycast Companion browser extension. The original CRX bundle was unpacked and its Parcel modules translated into readable TypeScript, so the codebase looks like a normal extension project while still matching the behavior of the shipped build.
+This repository collects a faithful reconstruction of the Raycast Companion browser extension for learning purposes. The original CRX bundle was unpacked and its Parcel modules translated into readable TypeScript, so the codebase looks like a normal extension project while still matching the behavior of the shipped build.
 
 ## Project structure
 
