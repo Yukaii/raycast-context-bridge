@@ -29,3 +29,7 @@ Load `dist/chrome` as an unpacked extension in Chromium-based browsers, or `dist
 ### Firefox support
 
 The Firefox build exists to keep feature parity but the Raycast desktop app only accepts WebSocket handshakes from `chrome-extension://…` origins. Firefox always uses `moz-extension://…` and browsers do not allow extensions to override the `Origin` header, so the desktop app closes the handshake before our background script can register. The console will log repeated events such as `browserDidFocus` followed by `Firefox can’t establish a connection to the server at ws://localhost:7265 (code 1006)` because the background worker retries on every focus change, but the rejection happens in Raycast’s binary. Once the desktop app supports Firefox origins, the `dist/firefox` bundle will work without further changes.
+
+## License / Usage
+
+These sources are shared for educational and archival purposes to illustrate how the original Raycast Companion extension worked. Raycast Technologies Ltd. retains all rights to the product and its assets. Please read the accompanying `LICENSE` notice before redistributing or attempting to ship derivative builds.

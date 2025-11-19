@@ -1,0 +1,10 @@
+Raycast Companion – Educational Use Notice
+===========================================
+
+This repository contains a reverse-engineered reconstruction of the Raycast Companion browser extension. It is provided solely for educational, research, and archival purposes to study how the original extension behaved. Raycast Technologies Ltd. retains all rights to the original assets, trademarks, and product experience.
+
+- You may read and study these sources to understand the extension’s architecture.
+- Do not ship, publish, or distribute derivative builds on any extension store without Raycast’s explicit permission.
+- Do not imply endorsement or affiliation with Raycast.
+
+By using this repository you acknowledge that the code is offered “AS IS” with no warranty, and that any commercial use of Raycast’s intellectual property must be cleared with the original rights holder.
