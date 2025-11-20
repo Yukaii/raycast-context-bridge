@@ -54,6 +54,8 @@ npm run build
 
 The background worker automatically routes Firefox connections through `ws://127.0.0.1:8787/<port>`, so no extra configuration is needed as long as the proxy keeps running. Advanced usage can customize the proxy host, listen port, or forwarded origin via environment variables (`RAYCAST_PROXY_PORT`, `RAYCAST_PROXY_HOST`, `RAYCAST_PROXY_FORWARD_ORIGIN`, etc.) or CLI flags (see `scripts/raycast-proxy.ts` for the list). When the Raycast desktop app eventually whitelists Firefox origins, the proxy can be shut down and the Firefox build will connect directly again.
 
+> **Note:** `npm run proxy` and `npm run proxy:build` depend on [Bun](https://bun.sh). Install Bun first (`curl -fsSL https://bun.sh/install | bash`) so the native WebSocket server can start.
+
 ##### Building a standalone proxy binary (Bun)
 
 If you prefer a single executable instead of running the proxy through tsx, compile it with Bun:
@@ -62,7 +64,7 @@ If you prefer a single executable instead of running the proxy through tsx, comp
 npm run proxy:build
 ```
 
-The command outputs `dist/raycast-proxy`, which you can copy to `/usr/local/bin/raycast-companion-proxy` (or another location referenced by your service manager).
+The command outputs `dist/raycast-proxy`, which you can copy to `/usr/local/bin/raycast-companion-proxy` (or another location referenced by your service manager). Set `RAYCAST_PROXY_BACKLOG` to tune how many client messages are buffered while waiting for Raycast to accept the upstream connection (default 256).
 
 ##### macOS launchctl service
 
