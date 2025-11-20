@@ -1,5 +1,7 @@
 import WebSocket, { WebSocketServer } from "ws"
 
+type RawData = Parameters<WebSocket["send"]>[0]
+
 type CliFlags = {
   listenPort?: number
   listenHost?: string
@@ -59,7 +61,8 @@ if (!Number.isFinite(listenPort)) {
 
 const server = new WebSocketServer({
   host: listenHost,
-  port: listenPort
+  port: listenPort,
+  perMessageDeflate: false
 })
 
 const formatTargetUrl = (port: number) => `ws://${targetHost}:${port}`
@@ -83,10 +86,14 @@ server.on("connection", (clientSocket, request) => {
     `[proxy] ${request.socket.remoteAddress ?? "client"} -> ${targetUrl} (${request.url})`
   )
 
+  const pendingClientMessages: RawData[] = []
+  let upstreamOpen = false
+
   const upstream = new WebSocket(targetUrl, {
     headers: {
       Origin: forwardOrigin
-    }
+    },
+    perMessageDeflate: false
   })
 
   const toReasonString = (reason?: Buffer | ArrayBuffer | ArrayBufferView) => {
@@ -114,8 +121,10 @@ server.on("connection", (clientSocket, request) => {
   }
 
   clientSocket.on("message", (data) => {
-    if (upstream.readyState === WebSocket.OPEN) {
+    if (upstream.readyState === WebSocket.OPEN && upstreamOpen) {
       upstream.send(data)
+    } else {
+      pendingClientMessages.push(data)
     }
   })
 
@@ -132,7 +141,15 @@ server.on("connection", (clientSocket, request) => {
   })
 
   upstream.on("open", () => {
+    upstreamOpen = true
     console.log(`[proxy] connected to Raycast on ${targetUrl}`)
+    if (pendingClientMessages.length) {
+      const backlog = pendingClientMessages.splice(0)
+      for (const payload of backlog) {
+        if (upstream.readyState !== WebSocket.OPEN) break
+        upstream.send(payload)
+      }
+    }
   })
 
   upstream.on("close", (code, reason) => {
