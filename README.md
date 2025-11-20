@@ -42,7 +42,7 @@ The `tsx`-powered test mimics Raycast’s JSON-RPC bridge and asserts that a `ch
 
 #### Firefox proxy workaround
 
-To experiment with a working Firefox connection today, run the included WebSocket proxy. It accepts `moz-extension://…` origins from the browser, then reconnects to Raycast with a `chrome-extension://…` origin so the desktop app accepts the handshake.
+To experiment with a working Firefox connection today, run the included WebSocket proxy (written in Go). It accepts `moz-extension://…` origins from the browser, then reconnects to Raycast with a `chrome-extension://…` origin so the desktop app accepts the handshake.
 
 ```bash
 # in one terminal
@@ -52,19 +52,17 @@ npm run proxy
 npm run build
 ```
 
-The background worker automatically routes Firefox connections through `ws://127.0.0.1:8787/<port>`, so no extra configuration is needed as long as the proxy keeps running. Advanced usage can customize the proxy host, listen port, or forwarded origin via environment variables (`RAYCAST_PROXY_PORT`, `RAYCAST_PROXY_HOST`, `RAYCAST_PROXY_FORWARD_ORIGIN`, etc.) or CLI flags (see `scripts/raycast-proxy.ts` for the list). When the Raycast desktop app eventually whitelists Firefox origins, the proxy can be shut down and the Firefox build will connect directly again.
-
-> **Note:** `npm run proxy` and `npm run proxy:build` depend on [Bun](https://bun.sh). Install Bun first (`curl -fsSL https://bun.sh/install | bash`) so the native WebSocket server can start.
+The background worker automatically routes Firefox connections through `ws://127.0.0.1:8787/<port>`, so no extra configuration is needed as long as the proxy keeps running. Advanced usage can customize the proxy host, listen port, or forwarded origin via environment variables (`RAYCAST_PROXY_HOST`, `RAYCAST_PROXY_PORT`, `RAYCAST_PROXY_TARGET_HOST`, `RAYCAST_PROXY_FORWARD_ORIGIN`) or CLI flags (see `proxy/cmd/raycast-proxy/main.go` for the list). When the Raycast desktop app eventually whitelists Firefox origins, the proxy can be shut down and the Firefox build will connect directly again. Install [Go 1.22+](https://go.dev/dl/) so `npm run proxy`/`npm run proxy:build` can run.
 
 ##### Building a standalone proxy binary (Bun)
 
-If you prefer a single executable instead of running the proxy through tsx, compile it with Bun:
+If you prefer a single executable instead of running the proxy via `go run`, build it with Go:
 
 ```bash
 npm run proxy:build
 ```
 
-The command outputs `dist/raycast-proxy`, which you can copy to `/usr/local/bin/raycast-companion-proxy` (or another location referenced by your service manager). Set `RAYCAST_PROXY_BACKLOG` to tune how many client messages are buffered while waiting for Raycast to accept the upstream connection (default 256).
+The command outputs `dist/raycast-proxy`, which you can copy to `/usr/local/bin/raycast-companion-proxy` (or another location referenced by your service manager).
 
 ##### macOS launchctl service
 
@@ -81,7 +79,7 @@ The plist sets the same env vars (`RAYCAST_PROXY_PORT`, `RAYCAST_PROXY_HOST`, et
 
 Windows users can also keep the proxy running as a background service:
 
-1. Build the proxy on Windows (`npm run proxy:build`) so Bun emits `dist/raycast-proxy.exe`.
+1. Build the proxy on Windows (`npm run proxy:build`) so Go emits `dist/raycast-proxy.exe`.
 2. Copy the executable to a fixed path, e.g., `C:\Program Files\RaycastCompanion\raycast-proxy.exe`, along with `windows/raycast-proxy-service.ps1`.
 3. Launch an elevated PowerShell prompt and run:
 

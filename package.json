@@ -7,8 +7,8 @@
     "build": "node scripts/build.mjs",
     "clean": "rm -rf dist",
     "test:origin": "tsx tests/raycast-origin.test.ts",
-    "proxy": "bun run scripts/raycast-proxy.ts",
-    "proxy:build": "bun build scripts/raycast-proxy.ts --compile --outfile dist/raycast-proxy"
+    "proxy": "cd proxy && go run ./cmd/raycast-proxy",
+    "proxy:build": "mkdir -p dist && cd proxy && go build -o ../dist/raycast-proxy ./cmd/raycast-proxy"
   },
   "keywords": [],
   "author": "",
