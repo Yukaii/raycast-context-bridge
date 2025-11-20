@@ -38,6 +38,20 @@ npm run test:origin
 
 The `tsx`-powered test mimics Raycast’s JSON-RPC bridge and asserts that a `chrome-extension://…` origin completes the `ping` request while the same handshake coming from `moz-extension://…` is terminated before JSON-RPC can proceed.
 
+#### Firefox proxy workaround
+
+To experiment with a working Firefox connection today, run the included WebSocket proxy. It accepts `moz-extension://…` origins from the browser, then reconnects to Raycast with a `chrome-extension://…` origin so the desktop app accepts the handshake.
+
+```bash
+# in one terminal
+npm run proxy
+
+# in Firefox, load dist/firefox after building
+npm run build
+```
+
+The background worker automatically routes Firefox connections through `ws://127.0.0.1:8787/<port>`, so no extra configuration is needed as long as the proxy keeps running. Advanced usage can customize the proxy host, listen port, or forwarded origin via environment variables (`RAYCAST_PROXY_PORT`, `RAYCAST_PROXY_HOST`, `RAYCAST_PROXY_FORWARD_ORIGIN`, etc.) or CLI flags (see `scripts/raycast-proxy.ts` for the list). When the Raycast desktop app eventually whitelists Firefox origins, the proxy can be shut down and the Firefox build will connect directly again.
+
 ## License / Usage
 
 These sources are shared for educational and archival purposes to illustrate how the original Raycast Companion extension worked. Raycast Technologies Ltd. retains all rights to the product and its assets. Please read the accompanying `LICENSE` notice before redistributing or attempting to ship derivative builds.

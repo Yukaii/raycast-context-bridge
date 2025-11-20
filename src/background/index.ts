@@ -20,6 +20,11 @@ const action =
 const tabs = globalThis.browser?.tabs || globalThis.chrome?.tabs
 const scripting = globalThis.browser?.scripting || globalThis.chrome?.scripting
 
+const isFirefox = typeof navigator !== "undefined" && /firefox/i.test(navigator.userAgent)
+const FIREFOX_PROXY_PORT = 8787
+const buildFirefoxProxyUrl = (flavour: RaycastFlavour | string) =>
+  `ws://127.0.0.1:${FIREFOX_PROXY_PORT}/${flavour}`
+
 const manifestAction = runtime.getManifest().action || runtime.getManifest().browser_action
 if (action && manifestAction?.default_icon) {
   action.setIcon({ path: manifestAction.default_icon })
@@ -37,7 +42,8 @@ const ensureConnection = () => {
     },
     debug: true,
     keepConnectionAlive: true,
-    retryConnection: true
+    retryConnection: true,
+    buildUrl: isFirefox ? (flavour: RaycastFlavour | string) => buildFirefoxProxyUrl(flavour) : undefined
   }
 
   storage.get("raycast-connect-to-all-flavour").then((flag) => {

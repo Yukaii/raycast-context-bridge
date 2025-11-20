@@ -14,5 +14,5 @@
       "@raycast/app": ["src/lib/raycast"]
     }
   },
-  "include": ["src"]
+  "include": ["src", "tests", "scripts"]
 }

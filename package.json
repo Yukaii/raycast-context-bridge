@@ -6,7 +6,8 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "clean": "rm -rf dist",
-    "test:origin": "tsx tests/raycast-origin.test.ts"
+    "test:origin": "tsx tests/raycast-origin.test.ts",
+    "proxy": "tsx scripts/raycast-proxy.ts"
   },
   "keywords": [],
   "author": "",
@@ -24,8 +25,10 @@
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@types/ws": "^8.18.1",
     "esbuild": "^0.27.0",
     "tsx": "^4.20.6",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "ws": "^8.18.3"
   }
 }

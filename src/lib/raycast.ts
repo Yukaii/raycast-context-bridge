@@ -22,6 +22,7 @@ type ConnectOptions = {
   flavour?: RaycastFlavour
   WebSocket?: typeof WebSocket
   debug?: boolean
+  buildUrl?: (flavour: RaycastFlavour | string) => string
 }
 
 type PendingRequest = {
@@ -172,13 +173,15 @@ const openConnection = (
   if (sockets[flavour]) return Promise.resolve()
   clearRetryTimer(flavour)
   const SocketImpl = options.WebSocket || WebSocket
+  const targetUrl =
+    options.buildUrl?.(flavour) ?? `ws://localhost:${String(flavour)}`
 
   return new Promise((resolve, reject) => {
     let opened = false
     try {
-      const socket = new SocketImpl(`ws://localhost:${flavour}`)
+      const socket = new SocketImpl(targetUrl)
       socket.onopen = (event) => {
-        if (options.debug) console.debug(`websocket to ${flavour} open`, event)
+        if (options.debug) console.debug(`websocket to ${targetUrl} open`, event)
         options.onOpen?.(flavour)
         keepAlive(flavour, options)
         sockets[flavour] = socket
@@ -194,7 +197,7 @@ const openConnection = (
       }
       socket.onclose = (event) => {
         if (options.debug) {
-          console.debug(`websocket connection to ${flavour} closed`, event)
+          console.debug(`websocket connection to ${targetUrl} closed`, event)
         }
         delete sockets[flavour]
         clearKeepAliveTimer(flavour)
@@ -208,7 +211,7 @@ const openConnection = (
       }
       sockets[flavour] = socket
     } catch (error) {
-      if (options.debug) console.debug(`Failed to connect to ${flavour}`, error)
+      if (options.debug) console.debug(`Failed to connect to ${targetUrl}`, error)
       if (!opened) reject(error as Error)
     }
   })

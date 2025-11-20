@@ -5,9 +5,14 @@ import { connect, disconnect, RaycastFlavour, sendRequest } from "../src/lib/ray
 type MockConfig = {
   allowedOrigin: string
   reportedOrigin: string
+  onConnect?: (url: string) => void
 }
 
-const createMockWebSocket = ({ allowedOrigin, reportedOrigin }: MockConfig): typeof WebSocket => {
+const createMockWebSocket = ({
+  allowedOrigin,
+  reportedOrigin,
+  onConnect
+}: MockConfig): typeof WebSocket => {
   type SocketMessageEvent = { data: string }
   type SocketCloseEvent = { reason?: string }
 
@@ -28,7 +33,9 @@ const createMockWebSocket = ({ allowedOrigin, reportedOrigin }: MockConfig): typ
     onclose: ((event: SocketCloseEvent) => void) | null = null
     onerror: ((event: Record<string, unknown>) => void) | null = null
 
-    constructor(_url: string) {
+    constructor(url: string | URL) {
+      const normalizedUrl = typeof url === "string" ? url : url.toString()
+      onConnect?.(normalizedUrl)
       queueMicrotask(() => {
         if (reportedOrigin !== allowedOrigin) {
           this.readyState = MockWebSocket.CLOSED
@@ -62,6 +69,7 @@ const createMockWebSocket = ({ allowedOrigin, reportedOrigin }: MockConfig): typ
 describe("Raycast WebSocket JSON-RPC with origin checks", () => {
   afterEach(() => {
     disconnect()
+    delete (globalThis as Record<string, unknown>).WebSocket
   })
 
   it("completes the JSON-RPC ping when the origin matches Chrome", async () => {
@@ -69,6 +77,7 @@ describe("Raycast WebSocket JSON-RPC with origin checks", () => {
       allowedOrigin: "chrome-extension://raycast",
       reportedOrigin: "chrome-extension://raycast"
     })
+    ;(globalThis as Record<string, unknown>).WebSocket = WebSocketImpl
     await connect({
       flavour: RaycastFlavour.Release,
       WebSocket: WebSocketImpl
@@ -82,6 +91,7 @@ describe("Raycast WebSocket JSON-RPC with origin checks", () => {
       allowedOrigin: "chrome-extension://raycast",
       reportedOrigin: "moz-extension://raycast"
     })
+    ;(globalThis as Record<string, unknown>).WebSocket = WebSocketImpl
     await assert.rejects(
       connect({
         flavour: RaycastFlavour.Release,
@@ -89,5 +99,26 @@ describe("Raycast WebSocket JSON-RPC with origin checks", () => {
       }),
       /Origin not allowed/
     )
+  })
+
+  it("respects the buildUrl override for proxy connections", async () => {
+    let observedUrl = ""
+    const WebSocketImpl = createMockWebSocket({
+      allowedOrigin: "chrome-extension://raycast",
+      reportedOrigin: "chrome-extension://raycast",
+      onConnect: (url) => {
+        observedUrl = url
+      }
+    })
+    ;(globalThis as Record<string, unknown>).WebSocket = WebSocketImpl
+    const proxyUrl = "ws://127.0.0.1:8787"
+    await connect({
+      flavour: RaycastFlavour.Release,
+      WebSocket: WebSocketImpl,
+      buildUrl: (flavour) => `${proxyUrl}/${flavour}`
+    })
+    const response = await sendRequest(RaycastFlavour.Release, "ping")
+    assert.equal(response, "pong")
+    assert.equal(observedUrl, `${proxyUrl}/${RaycastFlavour.Release}`)
   })
 })
