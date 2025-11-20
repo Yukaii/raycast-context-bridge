@@ -54,6 +54,44 @@ npm run build
 
 The background worker automatically routes Firefox connections through `ws://127.0.0.1:8787/<port>`, so no extra configuration is needed as long as the proxy keeps running. Advanced usage can customize the proxy host, listen port, or forwarded origin via environment variables (`RAYCAST_PROXY_PORT`, `RAYCAST_PROXY_HOST`, `RAYCAST_PROXY_FORWARD_ORIGIN`, etc.) or CLI flags (see `scripts/raycast-proxy.ts` for the list). When the Raycast desktop app eventually whitelists Firefox origins, the proxy can be shut down and the Firefox build will connect directly again.
 
+##### Building a standalone proxy binary (Bun)
+
+If you prefer a single executable instead of running the proxy through tsx, compile it with Bun:
+
+```bash
+npm run proxy:build
+```
+
+The command outputs `dist/raycast-proxy`, which you can copy to `/usr/local/bin/raycast-companion-proxy` (or another location referenced by your service manager).
+
+##### macOS launchctl service
+
+On macOS (where Raycast is currently supported), you can keep the proxy alive via launchd:
+
+1. Build/copy the binary to `/usr/local/bin/raycast-companion-proxy`.
+2. Copy `launchd/raycast-companion-proxy.plist` to `~/Library/LaunchAgents/com.raycastcompanion.proxy.plist` (or `/Library/LaunchAgents` for a system-wide install) and tweak the environment variables/paths as needed.
+3. Load the agent: `launchctl load ~/Library/LaunchAgents/com.raycastcompanion.proxy.plist`.
+4. Use `launchctl start com.raycastcompanion.proxy` / `launchctl stop …` / `launchctl unload …` to manage it.
+
+The plist sets the same env vars (`RAYCAST_PROXY_PORT`, `RAYCAST_PROXY_HOST`, etc.) so you can adjust behaviour without rebuilding the binary.
+
+##### Windows service
+
+Windows users can also keep the proxy running as a background service:
+
+1. Build the proxy on Windows (`npm run proxy:build`) so Bun emits `dist/raycast-proxy.exe`.
+2. Copy the executable to a fixed path, e.g., `C:\Program Files\RaycastCompanion\raycast-proxy.exe`, along with `windows/raycast-proxy-service.ps1`.
+3. Launch an elevated PowerShell prompt and run:
+
+   ```powershell
+   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
+   .\windows\install-proxy-service.ps1 `
+     -BinaryPath "C:\Program Files\RaycastCompanion\raycast-proxy.exe" `
+     -ServiceScript "C:\Program Files\RaycastCompanion\raycast-proxy-service.ps1"
+   ```
+
+4. Start the service with `Start-Service RaycastCompanionProxy`. The script sets the same proxy env vars by default (listen on `127.0.0.1:8787`, forward origin `chrome-extension://raycast-proxy`). Adjust them by editing `raycast-proxy-service.ps1` or setting `RAYCAST_PROXY_*` env vars system-wide before starting the service.
+
 ## License / Usage
 
 These sources are shared for educational and archival purposes to illustrate how the original Raycast Companion extension worked. Raycast Technologies Ltd. retains all rights to the product and its assets. Please read the accompanying `LICENSE` notice before redistributing or attempting to ship derivative builds.

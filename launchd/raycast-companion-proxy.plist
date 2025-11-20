@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.raycastcompanion.proxy</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/raycast-companion-proxy</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>RAYCAST_PROXY_PORT</key>
+    <string>8787</string>
+    <key>RAYCAST_PROXY_HOST</key>
+    <string>127.0.0.1</string>
+    <key>RAYCAST_PROXY_TARGET_HOST</key>
+    <string>127.0.0.1</string>
+    <key>RAYCAST_PROXY_FORWARD_ORIGIN</key>
+    <string>chrome-extension://raycast-proxy</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+
+  <key>StandardOutPath</key>
+  <string>/usr/local/var/log/raycast-companion-proxy.log</string>
+  <key>StandardErrorPath</key>
+  <string>/usr/local/var/log/raycast-companion-proxy.error.log</string>
+</dict>
+</plist>
