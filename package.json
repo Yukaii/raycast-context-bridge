@@ -5,7 +5,8 @@
   "main": "extract_modules.js",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "clean": "rm -rf dist"
+    "clean": "rm -rf dist",
+    "test:origin": "tsx tests/raycast-origin.test.ts"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +25,7 @@
   },
   "devDependencies": {
     "esbuild": "^0.27.0",
+    "tsx": "^4.20.6",
     "typescript": "^5.9.3"
   }
 }
