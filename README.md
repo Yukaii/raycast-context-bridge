@@ -2,109 +2,25 @@
 
 https://github.com/user-attachments/assets/1c153b5f-356a-415f-a18c-0155e16e152c
 
-This repository collects a faithful reconstruction of the Raycast Companion browser extension for learning purposes. The original CRX bundle was unpacked and its Parcel modules translated into readable TypeScript, so the codebase looks like a normal extension project while still matching the behavior of the shipped build.
+Reconstruction of the Raycast Companion browser extension for learning purposes. TypeScript sources mirror the original Parcel bundles while keeping the runtime behavior intact.
 
-## Project structure
+## Quick start
 
-- `src/` – TypeScript sources for the content script, background worker, user script, and shared libraries.
-- `assets/` – Extracted icons.
-- `scripts/` – Build script (`build.mjs`) plus the extraction helper used during restoration (`extract_modules.js`).
-- `dist/` – Build output, containing `chrome/` and `firefox/` bundles (`npm run build`).
-- `original_sources/` – Reference artifacts extracted from the original bundles. These are read-only and kept for diffing.
+- `npm install`
+- `npm run build`
+- Chrome: load `dist/chrome` as an unpacked extension.
+- Firefox: load `dist/firefox`. To produce a ZIP, run `npm run firefox:zip` (outputs `dist/firefox-artifacts/raycast-companion-firefox.zip`).
 
-## Restoration workflow
+## Firefox install tips
 
-1. **Module extraction** – The original bundles (`content.903826e2.js`, `static/background/index.js`, `userScripts.b7259c65.js`) were parsed with `scripts/extract_modules.js` to recover individual Parcel modules. The recovered JS and lookup tables (`background_modules.json`, `raycast_modules*.json`) live under `original_sources/`.
-2. **Source reconstruction** – Each recovered module was ported to TypeScript under `src/`, keeping the same APIs (content script, background service worker, user script, messaging helpers, etc.). Runtime-only dependencies (`@plasmohq/*`, `defuddle`, `he`) were reintroduced via `package.json`.
-3. **Raycast bridge** – The private `@raycast/app` WebSocket bridge (module `eeKRu`) and its RPC error helpers were extracted and reimplemented in `src/lib/raycast.ts` so the background script can talk to the desktop Raycast app just like the original extension.
-4. **Build tooling** – `scripts/build.mjs` runs esbuild on the TypeScript sources to produce `content.js`, `background.js`, `user-script.js`, the Options page bundle, and copies the appropriate manifest into per-browser directories under `dist/`.
+- In `about:config`, set `xpinstall.signatures.required` to `false` to allow unsigned add-ons.
+- In `about:addons`, use the gear menu → “Install Add-on From File…” (or drag the ZIP/`dist/firefox` onto the page) and select the ZIP.
 
-## Building
+## Docs
 
-```bash
-npm install
-npm run build
-```
-
-Load `dist/chrome` as an unpacked extension in Chromium-based browsers, or `dist/firefox` in Firefox (where the manifest switches to a persistent background script). Esbuild will warn about `eval` in the user script because the extension allows Raycast to execute snippets sent from the desktop app—this matches the original behavior, so leave it unless you plan to restrict that feature.
-
-To produce a Firefox-ready ZIP with `web-ext` after building, run:
-
-```bash
-npm run firefox:zip
-```
-
-The archive is written to `dist/firefox-artifacts/raycast-companion-firefox.zip`.
-
-To install in Firefox:
-- Visit `about:config`, search for `xpinstall.signatures.required`, and set it to `false` so unsigned add-ons load.
-- Open `about:addons` → gear menu → “Install Add-on From File…” (or drag the ZIP onto the page) and pick `dist/firefox-artifacts/raycast-companion-firefox.zip`.
-- Alternatively, you can drag the ZIP onto the `about:config` page or the Extensions panel to trigger the same prompt.
-
-### Firefox support
-
-The Firefox build exists to keep feature parity but the Raycast desktop app only accepts WebSocket handshakes from `chrome-extension://…` origins. Firefox always uses `moz-extension://…` and browsers do not allow extensions to override the `Origin` header, so the desktop app closes the handshake before our background script can register. The console will log repeated events such as `browserDidFocus` followed by `Firefox can’t establish a connection to the server at ws://localhost:7265 (code 1006)` because the background worker retries on every focus change, but the rejection happens in Raycast’s binary. Once the desktop app supports Firefox origins, the `dist/firefox` bundle will work without further changes.
-
-You can reproduce this restriction locally without the desktop app by running the Node-based test suite:
-
-```bash
-npm run test:origin
-```
-
-The `tsx`-powered test mimics Raycast’s JSON-RPC bridge and asserts that a `chrome-extension://…` origin completes the `ping` request while the same handshake coming from `moz-extension://…` is terminated before JSON-RPC can proceed.
-
-#### Firefox proxy workaround
-
-To experiment with a working Firefox connection today, run the included WebSocket proxy (written in Go). It accepts `moz-extension://…` origins from the browser, then reconnects to Raycast with a `chrome-extension://…` origin so the desktop app accepts the handshake.
-
-```bash
-# in one terminal
-npm run proxy
-
-# in Firefox, load dist/firefox after building
-npm run build
-```
-
-The background worker automatically routes Firefox connections through `ws://127.0.0.1:8787/<port>`, so no extra configuration is needed as long as the proxy keeps running. Advanced usage can customize the proxy host, listen port, or forwarded origin via environment variables (`RAYCAST_PROXY_HOST`, `RAYCAST_PROXY_PORT`, `RAYCAST_PROXY_TARGET_HOST`, `RAYCAST_PROXY_FORWARD_ORIGIN`) or CLI flags (see `proxy/cmd/raycast-proxy/main.go` for the list). When the Raycast desktop app eventually whitelists Firefox origins, the proxy can be shut down and the Firefox build will connect directly again. Install [Go 1.22+](https://go.dev/dl/) so `npm run proxy`/`npm run proxy:build` can run.
-
-##### Building a standalone proxy binary (Bun)
-
-If you prefer a single executable instead of running the proxy via `go run`, build it with Go:
-
-```bash
-npm run proxy:build
-```
-
-The command outputs `dist/raycast-proxy`, which you can copy to `/usr/local/bin/raycast-companion-proxy` (or another location referenced by your service manager).
-
-##### macOS launchctl service
-
-On macOS (where Raycast is currently supported), you can keep the proxy alive via launchd:
-
-1. Build/copy the binary to `/usr/local/bin/raycast-companion-proxy`.
-2. Copy `launchd/raycast-companion-proxy.plist` to `~/Library/LaunchAgents/com.raycastcompanion.proxy.plist` (or `/Library/LaunchAgents` for a system-wide install) and tweak the environment variables/paths as needed.
-3. Load the agent: `launchctl load ~/Library/LaunchAgents/com.raycastcompanion.proxy.plist`.
-4. Use `launchctl start com.raycastcompanion.proxy` / `launchctl stop …` / `launchctl unload …` to manage it.
-
-The plist sets the same env vars (`RAYCAST_PROXY_PORT`, `RAYCAST_PROXY_HOST`, etc.) so you can adjust behaviour without rebuilding the binary.
-
-##### Windows service
-
-Windows users can also keep the proxy running as a background service:
-
-1. Build the proxy on Windows (`npm run proxy:build`) so Go emits `dist/raycast-proxy.exe`.
-2. Copy the executable to a fixed path, e.g., `C:\Program Files\RaycastCompanion\raycast-proxy.exe`, along with `windows/raycast-proxy-service.ps1`.
-3. Launch an elevated PowerShell prompt and run:
-
-   ```powershell
-   Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope Process
-   .\windows\install-proxy-service.ps1 `
-     -BinaryPath "C:\Program Files\RaycastCompanion\raycast-proxy.exe" `
-     -ServiceScript "C:\Program Files\RaycastCompanion\raycast-proxy-service.ps1"
-   ```
-
-4. Start the service with `Start-Service RaycastCompanionProxy`. The script sets the same proxy env vars by default (listen on `127.0.0.1:8787`, forward origin `chrome-extension://raycast-proxy`). Adjust them by editing `raycast-proxy-service.ps1` or setting `RAYCAST_PROXY_*` env vars system-wide before starting the service.
+- Project structure and reconstruction notes: [docs/restoration.md](docs/restoration.md)
+- Firefox behavior, origin limitation, and proxy workaround: [docs/firefox.md](docs/firefox.md)
 
 ## License / Usage
 
-These sources are shared for educational and archival purposes to illustrate how the original Raycast Companion extension worked. Raycast Technologies Ltd. retains all rights to the product and its assets. Please read the accompanying `LICENSE` notice before redistributing or attempting to ship derivative builds.
+See `LICENSE` for terms; Raycast Technologies Ltd. retains all rights to the original product and assets.
