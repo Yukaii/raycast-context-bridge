@@ -40,6 +40,16 @@ npm run proxy:build
 
 Outputs `dist/raycast-proxy`, which you can copy into your `$PATH`.
 
+### Install via Go
+
+You can also install the proxy directly using `go install`:
+
+```bash
+go install github.com/Yukaii/raycast-context-bridge/proxy/cmd/raycast-proxy@latest
+```
+
+This installs the binary to your `$GOPATH/bin` (usually `~/go/bin`).
+
 ### macOS launchctl service
 
 1. Copy the proxy binary to `/usr/local/bin/raycast-companion-proxy`.

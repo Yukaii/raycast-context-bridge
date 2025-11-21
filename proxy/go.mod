@@ -1,4 +1,4 @@
-module github.com/raycast-companion/proxy
+module github.com/Yukaii/raycast-context-bridge/proxy
 
 go 1.22
 
