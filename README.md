@@ -16,6 +16,10 @@ Reconstruction of the Raycast Companion browser extension for learning purposes.
 - In `about:config`, set `xpinstall.signatures.required` to `false` to allow unsigned add-ons.
 - In `about:addons`, use the gear menu → “Install Add-on From File…” (or drag the ZIP/`dist/firefox` onto the page) and select the ZIP.
 
+## Firefox support
+
+Raycast currently rejects `moz-extension://` origins, so the Firefox build needs the proxy workaround shown in the screencast. Follow the proxy setup steps in [docs/firefox.md](docs/firefox.md).
+
 ## Docs
 
 - Project structure and reconstruction notes: [docs/restoration.md](docs/restoration.md)
