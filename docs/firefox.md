@@ -4,6 +4,10 @@
 
 The Raycast desktop app only accepts WebSocket handshakes from `chrome-extension://…` origins. Firefox uses `moz-extension://…` and extensions cannot override the `Origin` header, so the desktop app closes the handshake before the background script can register. You will see repeated `browserDidFocus` followed by `Firefox can’t establish a connection to the server at ws://localhost:7265 (code 1006)` because the background worker retries on focus.
 
+Raycast has confirmed this header mismatch on Reddit:
+
+> “Firefox uses different headers for its WebSocket connections for some unclear reasons (while all the other browsers use the same ones) - and the native APIs we use don’t handle those headers and reject the connection. So it's not just a matter of publishing.” — [u/pernielsentikaer (Raycast)](https://www.reddit.com/r/raycastapp/comments/1egrpu9/comment/lfxpbx7/)
+
 You can reproduce the restriction without the desktop app:
 
 ```bash
