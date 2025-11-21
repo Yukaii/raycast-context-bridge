@@ -28,6 +28,19 @@ npm run build
 
 Load `dist/chrome` as an unpacked extension in Chromium-based browsers, or `dist/firefox` in Firefox (where the manifest switches to a persistent background script). Esbuild will warn about `eval` in the user script because the extension allows Raycast to execute snippets sent from the desktop app—this matches the original behavior, so leave it unless you plan to restrict that feature.
 
+To produce a Firefox-ready ZIP with `web-ext` after building, run:
+
+```bash
+npm run firefox:zip
+```
+
+The archive is written to `dist/firefox-artifacts/raycast-companion-firefox.zip`.
+
+To install in Firefox:
+- Visit `about:config`, search for `xpinstall.signatures.required`, and set it to `false` so unsigned add-ons load.
+- Open `about:addons` → gear menu → “Install Add-on From File…” (or drag the ZIP onto the page) and pick `dist/firefox-artifacts/raycast-companion-firefox.zip`.
+- Alternatively, you can drag the ZIP onto the `about:config` page or the Extensions panel to trigger the same prompt.
+
 ### Firefox support
 
 The Firefox build exists to keep feature parity but the Raycast desktop app only accepts WebSocket handshakes from `chrome-extension://…` origins. Firefox always uses `moz-extension://…` and browsers do not allow extensions to override the `Origin` header, so the desktop app closes the handshake before our background script can register. The console will log repeated events such as `browserDidFocus` followed by `Firefox can’t establish a connection to the server at ws://localhost:7265 (code 1006)` because the background worker retries on every focus change, but the rejection happens in Raycast’s binary. Once the desktop app supports Firefox origins, the `dist/firefox` bundle will work without further changes.

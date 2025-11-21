@@ -6,6 +6,7 @@
   "scripts": {
     "build": "node scripts/build.mjs",
     "clean": "rm -rf dist",
+    "firefox:zip": "npm run build && web-ext build --config-discovery=false --config ./web-ext.firefox.config.cjs --filename raycast-companion-firefox.zip",
     "test:origin": "tsx tests/raycast-origin.test.ts",
     "proxy": "cd proxy && go run ./cmd/raycast-proxy",
     "proxy:build": "mkdir -p dist && cd proxy && go build -o ../dist/raycast-proxy ./cmd/raycast-proxy"
@@ -30,6 +31,7 @@
     "esbuild": "^0.27.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
+    "web-ext": "^9.2.0",
     "ws": "^8.18.3"
   }
 }
