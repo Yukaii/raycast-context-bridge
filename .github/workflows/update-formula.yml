@@ -1,0 +1,175 @@
+name: Update Homebrew Formula
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag to update formula for'
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  update-formula:
+    name: Update Homebrew Formula
+    runs-on: macos-latest
+    if: "!contains(github.event.release.tag_name, 'pre-release')"
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Get release tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="${{ github.event.inputs.tag }}"
+          else
+            TAG="${{ github.event.release.tag_name }}"
+          fi
+          # Remove 'v' prefix if present
+          VERSION=${TAG#v}
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Download release binaries
+        run: |
+          TAG="${{ steps.tag.outputs.tag }}"
+          mkdir -p tmp
+          cd tmp
+          
+          # Download macOS binaries for SHA calculation
+          curl -fsSL -O "https://github.com/${{ github.repository }}/releases/download/${TAG}/raycast-proxy-darwin-amd64"
+          curl -fsSL -O "https://github.com/${{ github.repository }}/releases/download/${TAG}/raycast-proxy-darwin-arm64"
+          curl -fsSL -O "https://github.com/${{ github.repository }}/releases/download/${TAG}/raycast-proxy-linux-amd64"
+          curl -fsSL -O "https://github.com/${{ github.repository }}/releases/download/${TAG}/raycast-proxy-linux-arm64"
+
+      - name: Calculate SHA256 checksums
+        id: checksums
+        run: |
+          cd tmp
+          DARWIN_AMD64_SHA=$(shasum -a 256 raycast-proxy-darwin-amd64 | awk '{print $1}')
+          DARWIN_ARM64_SHA=$(shasum -a 256 raycast-proxy-darwin-arm64 | awk '{print $1}')
+          LINUX_AMD64_SHA=$(shasum -a 256 raycast-proxy-linux-amd64 | awk '{print $1}')
+          LINUX_ARM64_SHA=$(shasum -a 256 raycast-proxy-linux-arm64 | awk '{print $1}')
+          
+          echo "darwin_amd64=$DARWIN_AMD64_SHA" >> $GITHUB_OUTPUT
+          echo "darwin_arm64=$DARWIN_ARM64_SHA" >> $GITHUB_OUTPUT
+          echo "linux_amd64=$LINUX_AMD64_SHA" >> $GITHUB_OUTPUT
+          echo "linux_arm64=$LINUX_ARM64_SHA" >> $GITHUB_OUTPUT
+          
+          echo "Checksums calculated:"
+          echo "Darwin AMD64: $DARWIN_AMD64_SHA"
+          echo "Darwin ARM64: $DARWIN_ARM64_SHA"
+          echo "Linux AMD64: $LINUX_AMD64_SHA"
+          echo "Linux ARM64: $LINUX_ARM64_SHA"
+
+      - name: Update Homebrew formula
+        run: |
+          VERSION="${{ steps.tag.outputs.version }}"
+          DARWIN_AMD64_SHA="${{ steps.checksums.outputs.darwin_amd64 }}"
+          DARWIN_ARM64_SHA="${{ steps.checksums.outputs.darwin_arm64 }}"
+          LINUX_AMD64_SHA="${{ steps.checksums.outputs.linux_amd64 }}"
+          LINUX_ARM64_SHA="${{ steps.checksums.outputs.linux_arm64 }}"
+          
+          # Update the formula
+          sed -i '' "s/version \".*\"/version \"$VERSION\"/" Formula/raycast-proxy.rb
+          
+          # Update SHA256 checksums
+          # This is a bit tricky with sed, so we'll use a more robust approach
+          cat > Formula/raycast-proxy.rb << 'EOF'
+          class RaycastProxy < Formula
+            desc "WebSocket proxy for Raycast browser extension"
+            homepage "https://github.com/Yukaii/raycast-context-bridge"
+            version "VERSION_PLACEHOLDER"
+            license "MIT"
+
+            on_macos do
+              if Hardware::CPU.arm?
+                url "https://github.com/Yukaii/raycast-context-bridge/releases/download/vVERSION_PLACEHOLDER/raycast-proxy-darwin-arm64"
+                sha256 "DARWIN_ARM64_SHA_PLACEHOLDER"
+              else
+                url "https://github.com/Yukaii/raycast-context-bridge/releases/download/vVERSION_PLACEHOLDER/raycast-proxy-darwin-amd64"
+                sha256 "DARWIN_AMD64_SHA_PLACEHOLDER"
+              end
+            end
+
+            on_linux do
+              if Hardware::CPU.arm?
+                url "https://github.com/Yukaii/raycast-context-bridge/releases/download/vVERSION_PLACEHOLDER/raycast-proxy-linux-arm64"
+                sha256 "LINUX_ARM64_SHA_PLACEHOLDER"
+              else
+                url "https://github.com/Yukaii/raycast-context-bridge/releases/download/vVERSION_PLACEHOLDER/raycast-proxy-linux-amd64"
+                sha256 "LINUX_AMD64_SHA_PLACEHOLDER"
+              end
+            end
+
+            def install
+              bin.install Dir["raycast-proxy-*"].first => "raycast-proxy"
+            end
+
+            def caveats
+              <<~EOS
+                To start the Raycast proxy server:
+                  raycast-proxy
+
+                The proxy will listen on http://127.0.0.1:8787 by default.
+
+                Configuration options (via environment variables or flags):
+                  RAYCAST_PROXY_HOST / --listen-host: Host to listen on (default: 127.0.0.1)
+                  RAYCAST_PROXY_PORT / --listen-port: Port to listen on (default: 8787)
+                  RAYCAST_PROXY_TARGET_HOST / --target-host: Raycast host to connect to (default: 127.0.0.1)
+                  RAYCAST_PROXY_FORWARD_ORIGIN / --forward-origin: Origin header forwarded to Raycast
+
+                Example:
+                  raycast-proxy --listen-port 9999
+                  RAYCAST_PROXY_PORT=9999 raycast-proxy
+
+                To run as a background service on macOS:
+                  brew services start raycast-proxy
+
+                For more information, visit:
+                  https://github.com/Yukaii/raycast-context-bridge
+              EOS
+            end
+
+            service do
+              run [opt_bin/"raycast-proxy"]
+              keep_alive true
+              log_path var/"log/raycast-proxy.log"
+              error_log_path var/"log/raycast-proxy.log"
+              working_dir var
+            end
+
+            test do
+              # Test that the binary exists and can show help
+              assert_match "Usage", shell_output("#{bin}/raycast-proxy --help 2>&1", 2)
+            end
+          end
+          EOF
+          
+          # Replace placeholders
+          sed -i '' "s/VERSION_PLACEHOLDER/$VERSION/g" Formula/raycast-proxy.rb
+          sed -i '' "s/DARWIN_AMD64_SHA_PLACEHOLDER/$DARWIN_AMD64_SHA/g" Formula/raycast-proxy.rb
+          sed -i '' "s/DARWIN_ARM64_SHA_PLACEHOLDER/$DARWIN_ARM64_SHA/g" Formula/raycast-proxy.rb
+          sed -i '' "s/LINUX_AMD64_SHA_PLACEHOLDER/$LINUX_AMD64_SHA/g" Formula/raycast-proxy.rb
+          sed -i '' "s/LINUX_ARM64_SHA_PLACEHOLDER/$LINUX_ARM64_SHA/g" Formula/raycast-proxy.rb
+
+      - name: Commit and push changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git add Formula/raycast-proxy.rb
+          
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "chore: update Homebrew formula to version ${{ steps.tag.outputs.version }}"
+            git push
+          fi

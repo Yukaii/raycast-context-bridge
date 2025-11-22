@@ -20,8 +20,35 @@ Reconstruction of the Raycast Companion browser extension for learning purposes.
 
 Raycast currently rejects `moz-extension://` origins, so the Firefox build needs the proxy workaround shown in the screencast. Follow the proxy setup steps in [docs/firefox.md](docs/firefox.md).
 
+## Raycast Proxy Installation
+
+The raycast-proxy is a WebSocket proxy server that enables the Firefox extension to communicate with Raycast by forwarding connections with the correct origin header.
+
+**📖 For detailed installation instructions, see [docs/installation.md](docs/installation.md)**
+
+### Quick Install (Recommended)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/Yukaii/raycast-context-bridge/main/scripts/install.sh | bash
+```
+
+### Homebrew (macOS/Linux)
+
+Since this repository doesn't follow Homebrew's naming convention, use the full formula URL:
+
+```bash
+brew install https://raw.githubusercontent.com/Yukaii/raycast-context-bridge/main/Formula/raycast-proxy.rb
+```
+
+### More Options
+
+- **Download pre-built binaries**: See the [releases page](https://github.com/Yukaii/raycast-context-bridge/releases)
+- **Build from source**: See [docs/installation.md](docs/installation.md#method-4-build-from-source)
+
 ## Docs
 
+- **Raycast Proxy Installation**: [docs/installation.md](docs/installation.md)
+- **Homebrew Installation Guide**: [docs/homebrew.md](docs/homebrew.md)
 - Project structure and reconstruction notes: [docs/restoration.md](docs/restoration.md)
 - Firefox behavior, origin limitation, and proxy workaround: [docs/firefox.md](docs/firefox.md)
 
