@@ -1,0 +1,180 @@
+name: Build and Release Raycast Proxy
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      create_release:
+        description: 'Create pre-release'
+        required: true
+        default: true
+        type: boolean
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build for ${{ matrix.goos }}-${{ matrix.goarch }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          # macOS
+          - goos: darwin
+            goarch: amd64
+            os: macos-latest
+            output_name: raycast-proxy-darwin-amd64
+          - goos: darwin
+            goarch: arm64
+            os: macos-latest
+            output_name: raycast-proxy-darwin-arm64
+          # Linux
+          - goos: linux
+            goarch: amd64
+            os: ubuntu-latest
+            output_name: raycast-proxy-linux-amd64
+          - goos: linux
+            goarch: arm64
+            os: ubuntu-latest
+            output_name: raycast-proxy-linux-arm64
+          # Windows
+          - goos: windows
+            goarch: amd64
+            os: ubuntu-latest
+            output_name: raycast-proxy-windows-amd64.exe
+          - goos: windows
+            goarch: arm64
+            os: ubuntu-latest
+            output_name: raycast-proxy-windows-arm64.exe
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+          cache-dependency-path: proxy/go.sum
+
+      - name: Build binary
+        working-directory: ./proxy
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: |
+          go build -ldflags="-s -w" -trimpath -o ${{ matrix.output_name }} ./cmd/raycast-proxy
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.output_name }}
+          path: proxy/${{ matrix.output_name }}
+          retention-days: 7
+
+  release:
+    name: Create Pre-release
+    needs: build
+    runs-on: ubuntu-latest
+    if: (github.event_name == 'push' && (startsWith(github.ref, 'refs/tags/v') || github.ref == 'refs/heads/main')) || (github.event_name == 'workflow_dispatch' && github.event.inputs.create_release == true)
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
+
+      - name: Display structure of downloaded files
+        run: ls -R dist
+
+      - name: Generate checksums
+        working-directory: dist
+        run: |
+          for dir in */; do
+            cd "$dir"
+            for file in *; do
+              if [ -f "$file" ]; then
+                sha256sum "$file" >> ../checksums.txt
+                echo "Generated checksum for $file"
+              fi
+            done
+            cd ..
+          done
+          cat checksums.txt
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p release
+          for dir in dist/*/; do
+            cp -v "$dir"* release/ 2>/dev/null || true
+          done
+          mv dist/checksums.txt release/ 2>/dev/null || true
+          ls -lah release/
+
+      - name: Get tag name
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            TAG="pre-release-$(date +%Y%m%d-%H%M%S)"
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            # Main branch commit - create pre-release with commit SHA
+            SHORT_SHA=$(git rev-parse --short HEAD)
+            TAG="pre-release-main-${SHORT_SHA}-$(date +%Y%m%d-%H%M%S)"
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+          else
+            # Tag-based release
+            TAG=${GITHUB_REF#refs/tags/}
+            echo "tag=$TAG" >> $GITHUB_OUTPUT
+            # Check if tag contains alpha, beta, rc, or pre
+            if [[ $TAG =~ (alpha|beta|rc|pre) ]]; then
+              echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            else
+              echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.tag.outputs.tag }}
+          name: Raycast Proxy ${{ steps.tag.outputs.tag }}
+          draft: false
+          prerelease: ${{ steps.tag.outputs.is_prerelease }}
+          generate_release_notes: true
+          files: |
+            release/*
+          body: |
+            ## Raycast Proxy Binary Release
+            
+            Pre-built binaries for multiple platforms.
+            
+            ### Supported Platforms
+            - macOS (Intel & Apple Silicon)
+            - Linux (x64 & ARM64)
+            - Windows (x64 & ARM64)
+            
+            ### Installation
+            
+            1. Download the appropriate binary for your platform
+            2. Make it executable (Unix-like systems): `chmod +x raycast-proxy-*`
+            3. Run the proxy: `./raycast-proxy-*`
+            
+            ### Checksum Verification
+            
+            Verify your download with the checksums provided in `checksums.txt`:
+            ```bash
+            sha256sum -c checksums.txt
+            ```
+            
+            For more information, see the [README](https://github.com/${{ github.repository }}).
