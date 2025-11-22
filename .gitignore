@@ -137,3 +137,5 @@ dist
 .pnp.*
 
 *.bun-build
+
+proxy/raycast-proxy
