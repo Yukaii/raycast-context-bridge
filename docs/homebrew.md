@@ -1,36 +1,17 @@
 # Installing Raycast Proxy via Homebrew
 
-Since this repository doesn't follow Homebrew's standard naming convention (repositories must be named `homebrew-*` to use tap shortcuts), users need to specify the full formula URL.
+This repository is not named `homebrew-*`, so tap it with a custom remote, then install the formula explicitly.
 
-## Installation Command
+## Installation
 
 ```bash
-brew install https://raw.githubusercontent.com/Yukaii/raycast-context-bridge/main/Formula/raycast-proxy.rb
+brew tap Yukaii/raycast-context-bridge https://github.com/Yukaii/raycast-context-bridge
+brew install Yukaii/raycast-context-bridge/raycast-proxy
 ```
-
-## Why not use `brew tap`?
-
-Homebrew expects tap repositories to follow the naming convention `homebrew-<tapname>`. For example:
-- `brew tap username/tools` looks for `username/homebrew-tools`
-- `brew install username/tools/formula` works after tapping
-
-Since this repository is named `raycast-companion-analysis` (not `homebrew-something`), we cannot use the tap shortcut. Instead, users must provide the full URL to the formula.
-
-## Alternative: Create a Separate Tap Repository
-
-If you want users to have a simpler installation command, you could:
-
-1. Create a new repository: `Yukaii/homebrew-raycast`
-2. Move `Formula/raycast-proxy.rb` to that repository
-3. Users can then install with:
-   ```bash
-   brew tap Yukaii/raycast
-   brew install raycast-proxy
-   ```
 
 ## Using the Formula
 
-After installation, users can:
+After installation, you can:
 
 ```bash
 # Run the proxy

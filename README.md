@@ -97,12 +97,14 @@ curl -fsSL https://raw.githubusercontent.com/Yukaii/raycast-context-bridge/main/
 
 #### Option 2: Homebrew (macOS/Linux)
 
+Tap this repository with an explicit remote (the repo name isn't `homebrew-*`), then install:
+
 ```bash
-# Tap the repository
-brew tap Yukaii/raycast-context-bridge
+# Tap with custom remote
+brew tap Yukaii/raycast-context-bridge https://github.com/Yukaii/raycast-context-bridge
 
 # Install
-brew install raycast-proxy
+brew install Yukaii/raycast-context-bridge/raycast-proxy
 
 # Start the proxy
 raycast-proxy

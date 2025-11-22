@@ -29,10 +29,11 @@ raycast-proxy
 
 ### Method 2: Homebrew (macOS/Linux)
 
-**Note:** This repository doesn't follow Homebrew's naming convention, so you need to use the full formula URL.
+Tap this repository with an explicit remote (it is not named `homebrew-*`), then install:
 
 ```bash
-brew install https://raw.githubusercontent.com/Yukaii/raycast-context-bridge/main/Formula/raycast-proxy.rb
+brew tap Yukaii/raycast-context-bridge https://github.com/Yukaii/raycast-context-bridge
+brew install Yukaii/raycast-context-bridge/raycast-proxy
 ```
 
 #### Running as a Service
